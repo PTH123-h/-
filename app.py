@@ -158,8 +158,15 @@ def make_input_frame(values: dict[str, float]) -> pd.DataFrame:
 
 
 def predict_probability(model: object, x_input: pd.DataFrame) -> float:
-    probability = np.asarray(model.predict_proba(x_input)[:, 1], dtype=float)
-    return float(probability[0])
+    try:
+        probability = np.asarray(model.predict_proba(x_input)[:, 1], dtype=float)
+        return float(probability[0])
+    except AttributeError:
+        if hasattr(model, "named_steps") and "model" in model.named_steps:
+            inner_model = model.named_steps["model"]
+            probability = np.asarray(inner_model.predict_proba(x_input.astype(float).to_numpy())[:, 1], dtype=float)
+            return float(probability[0])
+        raise
 
 
 def render_number_input(feature: str) -> float:
